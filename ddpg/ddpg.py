@@ -9,6 +9,10 @@ and developed with tflearn + Tensorflow
 
 Author: Patrick Emami
 """
+import opensim as osim
+from osim.env import *
+from osim.http.client import Client
+
 import tensorflow as tf
 import numpy as np
 import gym
@@ -32,11 +36,11 @@ class ActorNetwork(object):
     between -action_bound and action_bound
     """
 
-    def __init__(self, sess, state_dim, action_dim, action_bound, learning_rate, tau):
+    def __init__(self, sess, state_dim, action_dim, learning_rate, tau):
         self.sess = sess
         self.s_dim = state_dim
         self.a_dim = action_dim
-        self.action_bound = action_bound
+        self.action_bound = 1
         self.learning_rate = learning_rate
         self.tau = tau
 
@@ -338,7 +342,9 @@ def main(args):
 
     with tf.Session() as sess:
 
-        env = gym.make(args['env'])
+        env = RunEnv(visualize=False)
+        env.reset()
+
         np.random.seed(int(args['random_seed']))
         tf.set_random_seed(int(args['random_seed']))
         env.seed(int(args['random_seed']))
@@ -347,9 +353,8 @@ def main(args):
         action_dim = env.action_space.shape[0]
         action_bound = env.action_space.high
         # Ensure action bound is symmetric
-        assert (env.action_space.high == -env.action_space.low)
 
-        actor = ActorNetwork(sess, state_dim, action_dim, action_bound,
+        actor = ActorNetwork(sess, state_dim, action_dim,
                              float(args['actor_lr']), float(args['tau']))
 
         critic = CriticNetwork(sess, state_dim, action_dim,
